@@ -7,7 +7,7 @@ provider "azurerm" {
 locals {
   rg_name        = "rg-${var.project_name}-${var.environment_type}"
   aks_name       = "aks-${var.project_name}-${var.environment_type}-01"
-  node_pool_name = "workers-01"
+  node_pool_name = "workers01"
 
   tags = {
     environment_type            = var.environment_type
@@ -64,9 +64,9 @@ resource "azurerm_kubernetes_cluster" "main" {
     }
   }
 
-  network_profile {
-    network_plugin = "azure"
-  }
+#   network_profile {
+#     network_plugin = "azure"
+#   }
 
   tags = local.tags
 }
