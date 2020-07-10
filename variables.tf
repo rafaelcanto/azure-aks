@@ -16,12 +16,7 @@ variable "environment_type" {
 
 variable "subnet_id" {
   type    = string
-  default = "/subscriptions/834f081d-bd7c-4908-97bd-98302a28f9fa/resourceGroups/rg-landingzone-nprd-network/providers/Microsoft.Network/virtualNetworks/vnet-landingzone-nprd-eastus2-01/subnets/snet-application"
-}
-
-
-variable "aks_prefix" {
-  type = string
+  description = "Informe a subnet para criar os nodepools"
 }
 
 variable "node_count" {

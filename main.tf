@@ -5,9 +5,11 @@ provider "azurerm" {
 
 
 locals {
-  rg_name        = "rg-${var.project_name}-${var.environment_type}"
-  aks_name       = "aks-${var.project_name}-${var.environment_type}-01"
-  node_pool_name = "workers01"
+  rg_name          = "rg-${var.project_name}-${var.environment_type}-01"             // rg-projeto-dev-01
+  rg_nodepool_name = "rg-${var.project_name}-${var.environment_type}-01-nodepool-01" // rg-projeto-dev-01-nodepool-01
+  aks_name         = "aks-${var.project_name}-${var.environment_type}-01"            // aks-projeto-dev-01
+  node_pool_name   = "pool01"
+  aks_dns_prefix   = "aks-dns-${var.project_name}-${var.environment_type}-01-dns" // akscluster-dev-01
 
   tags = {
     environment_type            = var.environment_type
@@ -35,12 +37,19 @@ resource "azurerm_resource_group" "main" {
   tags     = local.tags
 }
 
+resource "azurerm_resource_group" "nodepool" {
+  name     = local.rg_nodepool_name
+  location = var.location
+  tags     = local.tags
+}
+
 
 resource "azurerm_kubernetes_cluster" "main" {
   name                = local.aks_name
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  dns_prefix          = var.aks_prefix
+  dns_prefix          = local.aks_dns_prefix
+  node_resource_group = azurerm_resource_group.nodepool.name
 
   default_node_pool {
     name           = local.node_pool_name
@@ -49,24 +58,24 @@ resource "azurerm_kubernetes_cluster" "main" {
     vnet_subnet_id = var.subnet_id
   }
 
-  service_principal {
-    client_id     = "${var.kubernetes_client_id}"
-    client_secret = "${var.kubernetes_client_secret}"
+  identity {
+    type = "SystemAssigned"
   }
 
-  role_based_access_control {
-    enabled = true
+  # service_principal {
+  #   client_id     = "${var.kubernetes_client_id}"
+  #   client_secret = "${var.kubernetes_client_secret}"
+  # }
 
-    azure_active_directory {
-      client_app_id     = "${var.kubernetes_client_id}"
-      server_app_id     = "${var.kubernetes_client_id}"
-      server_app_secret = "${var.kubernetes_client_secret}"
-    }
-  }
+  tags = local.tags
+}
 
-#   network_profile {
-#     network_plugin = "azure"
-#   }
+resource "azurerm_kubernetes_cluster_node_pool" "main" {
+  name                  = local.node_pool_name
+  kubernetes_cluster_id = azurerm_kubernetes_cluster.main.id
+  node_count            = var.node_count
+  vm_size               = "Standard_D2_v2"
+  vnet_subnet_id        = var.subnet_id
 
   tags = local.tags
 }
